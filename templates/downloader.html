@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Reel Downloader | Clippio</title>
+    
+    <meta name="description" content="Download Instagram Reels in high quality with Clippio. Fast, easy-to-use, and no registration required.">
+    <meta name="keywords" content="Instagram downloader, Reels download, save Instagram videos, Instagram video downloader">
+    <meta name="author" content="Clippio Team">
+    
+    <meta property="og:title" content="Instagram Reel Downloader | Clippio">
+    <meta property="og:description" content="Download Instagram Reels in high quality with our fast and easy-to-use downloader.">
+    <meta property="og:type" content="website">
+    
+    <link rel="icon" href="/static/i.png" type="image/x-icon">
+    
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    <style>
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            background: #ffffff;
+            color: #333;
+            overflow-x: hidden;
+            position: relative;
+            line-height: 1.6;
+        }
+        
+        ::selection {
+            background: rgba(225, 48, 108, 0.3);
+        }
+        
+        /* Background Dots */
+        .background-dots {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .bg-dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, #ff94b8 20%, #E1306C 80%);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(225, 48, 108, 0.3);
+            opacity: 0.6;
+            animation: dotFloat 10s ease-in-out infinite;
+        }
+        
+        /* Dots positions */
+        .bg-dot:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .bg-dot:nth-child(2) { top: 15%; left: 85%; animation-delay: 0.5s; }
+        .bg-dot:nth-child(3) { top: 20%; left: 25%; animation-delay: 1s; }
+        .bg-dot:nth-child(4) { top: 25%; left: 70%; animation-delay: 1.5s; }
+        .bg-dot:nth-child(5) { top: 30%; left: 15%; animation-delay: 2s; }
+        .bg-dot:nth-child(6) { top: 35%; left: 90%; animation-delay: 2.5s; }
+        .bg-dot:nth-child(7) { top: 40%; left: 35%; animation-delay: 3s; }
+        .bg-dot:nth-child(8) { top: 45%; left: 60%; animation-delay: 3.5s; }
+        .bg-dot:nth-child(9) { top: 50%; left: 5%; animation-delay: 4s; }
+        .bg-dot:nth-child(10) { top: 55%; left: 80%; animation-delay: 4.5s; }
+        
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(225, 48, 108, 0.1);
+        }
+        
+        .navbar.hidden {
+            transform: translateY(-100%);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+        
+        .nav-item a {
+            color: #333;
+            font-weight: 500;
+            position: relative;
+            padding: 0.5rem 0;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-item a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-item a:hover::after, .nav-item.active a::after {
+            width: 100%;
+        }
+        
+        .nav-item a:hover, .nav-item.active a {
+            color: #E1306C;
+        }
+        
+        /* Main Content */
+        .container {
+            padding: 8rem 2rem 4rem;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .downloader-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .downloader-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .platform-icon {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .downloader-header p {
+            color: #555;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Form Styles */
+        .downloader-form {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(225, 48, 108, 0.1);
+            margin-bottom: 2rem;
+            border: 1px solid rgba(225, 48, 108, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .input-group {
+            display: flex;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(225, 48, 108, 0.1);
+        }
+        
+        .input-group input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            background-color: #f9f9f9;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            background-color: white;
+        }
+        
+        .input-group button {
+            padding: 0 1.5rem;
+            border: none;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group button:hover {
+            background: linear-gradient(to right, #c91a50, #e65fa3);
+        }
+        
+        /* Button Styles */
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            color: white;
+            box-shadow: 0 10px 20px rgba(225, 48, 108, 0.2);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(225, 48, 108, 0.3);
+            background: linear-gradient(to right, #c91a50, #e65fa3);
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #E1306C;
+            color: #E1306C;
+        }
+        
+        .btn-outline:hover {
+            background: rgba(225, 48, 108, 0.1);
+        }
+        
+        /* Preview Section */
+        .preview-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(225, 48, 108, 0.1);
+            margin-bottom: 2rem;
+            display: none;
+            border: 1px solid rgba(225, 48, 108, 0.1);
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .preview-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .preview-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .preview-video {
+            width: 100%;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            background-color: #f5f5f5;
+        }
+        
+        .preview-video video {
+            width: 100%;
+            display: block;
+        }
+        
+        .preview-info {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .preview-thumbnail {
+            width: 120px;
+            height: 90px;
+            border-radius: 0.5rem;
+            object-fit: cover;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .preview-details {
+            flex: 1;
+        }
+        
+        .preview-details h3 {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .preview-details p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        /* Download Section */
+        .download-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(225, 48, 108, 0.1);
+            display: none;
+            border: 1px solid rgba(225, 48, 108, 0.1);
+        }
+        
+        .download-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .download-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .download-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .download-success {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .download-success-icon {
+            color: #10b981;
+            font-size: 2rem;
+        }
+        
+        .download-success-text h3 {
+            color: #10b981;
+            margin-bottom: 0.5rem;
+        }
+        
+        .download-success-text p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .download-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .download-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        /* Error Message */
+        .error-message {
+            padding: 1rem;
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .error-message p {
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Loading Spinner */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(225, 48, 108, 0.3);
+            border-radius: 50%;
+            border-top-color: #E1306C;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        .loading-spinner p {
+            color: #666;
+        }
+        
+        /* Footer */
+        footer {
+            background: #111;
+            color: #fff;
+            padding: 4rem 2rem 2rem;
+        }
+        
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #FF7AB8, #E1306C);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .footer-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #FF7AB8;
+        }
+        
+        .footer-section p, 
+        .footer-section a {
+            color: #bbb;
+            margin-bottom: 0.75rem;
+            display: block;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-section a:hover {
+            color: #FF7AB8;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 122, 184, 0.2);
+            color: #777;
+        }
+        
+        /* Animations */
+        @keyframes dotFloat {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-100px) scale(1.2); opacity: 0; }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 7rem 1.5rem 3rem;
+            }
+            
+            .downloader-header h1 {
+                font-size: 2rem;
+            }
+            
+            .preview-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .preview-thumbnail {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+            }
+            
+            .download-actions {
+                flex-direction: column;
+            }
+            
+            .navbar {
+                padding: 1rem;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .downloader-header h1 {
+                font-size: 1.8rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-group input {
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+            
+            .input-group button {
+                border-radius: 0 0 0.5rem 0.5rem;
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-dots">
+        <div class="bg-dot"></div>
+        <div class="bg-dot"></div>
+        <div class="bg-dot"></div>
+        <div class="bg-dot"></div>
+        <div class="bg-dot"></div>
+        <div class="bg-dot"></div>
+        <div class="bg-dot"></div>
+        <div class="bg-dot"></div>
+        <div class="bg-dot"></div>
+        <div class="bg-dot"></div>
+    </div>
+    
+    <nav class="navbar">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='i.png') }}" alt="Download" style="height: 28px; width: 32px; vertical-align: middle;">
+            <span class="logo-text">Clippio</span>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="/">Home</a></li>
+            <li class="nav-item active"><a href="/downloader/instagram">Downloader</a></li>
+            <li class="nav-item"><a href="/about">About</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="downloader-header">
+            <h1>
+                <span class="material-icons platform-icon">photo_camera</span>
+                Instagram Reel Downloader
+            </h1>
+            <p>Paste your Instagram Reel link below and download it in high quality</p>
+        </div>
+
+        <div class="downloader-form">
+            <div class="form-group">
+                <label for="url-input">Instagram Reel URL</label>
+                <div class="input-group">
+                    <input type="text" id="url-input" placeholder="https://www.instagram.com/reel/">
+                    <button id="preview-btn">
+                        <span class="material-icons" style="vertical-align: middle;">visibility</span>
+                        Preview
+                    </button>
+                </div>
+            </div>
+            <div id="error-message" class="error-message">
+                <p>
+                    <span class="material-icons">error</span>
+                    <span id="error-text">Invalid URL. Please check and try again.</span>
+                </p>
+            </div>
+            <div id="loading-spinner" class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Processing your request...</p>
+            </div>
+        </div>
+
+        <div id="preview-section" class="preview-section">
+            <div class="preview-header">
+                <h2 class="preview-title">Reel Preview</h2>
+                <button id="close-preview" class="btn">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="preview-content">
+                <div class="preview-video">
+                    <video id="preview-video" controls>
+                        <source id="video-source" src="">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <div class="preview-info">
+                    <div class="preview-details">
+                        <h3 id="video-title">Reel Title</h3>
+                        <p id="video-duration">Duration: 0:00</p>
+                    </div>
+                </div>
+            </div>
+            <button id="download-btn" class="btn btn-primary btn-block">
+                <span class="material-icons" style="vertical-align: middle;">download</span>
+                Download Reel
+            </button>
+        </div>
+
+        <div id="download-section" class="download-section">
+            <div class="download-header">
+                <h2 class="download-title">Fetching Completed</h2>
+                <button id="close-download" class="btn">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="download-content">
+                <div class="download-success">
+                    <span class="material-icons download-success-icon">check_circle</span>
+                    <div class="download-success-text">
+                        <h3 id="download-success-title">Download Successful</h3>
+                        <p id="download-success-filename">Your reel has been downloaded successfully.</p>
+                        <p id="expiration-message" style="font-size: 0.8rem; color: #E1306C; margin-top: 5px;"></p>
+                    </div>
+                </div>
+                <div class="download-actions">
+                    <a id="download-link" class="btn btn-primary download-btn" href="#" download>
+                        <span class="material-icons">file_download</span>
+                        Save Reel
+                    </a>
+                    <a id="view-video" class="btn btn-outline download-btn" href="#" target="_blank">
+                        <span class="material-icons">play_circle</span>
+                        View Reel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <div class="footer-logo">
+                    <img src="{{ url_for('static', filename='i.png') }}" alt="Download" style="height: 28px; width: 32px; vertical-align: middle; margin-right: 5px;">
+                    <span class="footer-logo-text">Clippio</span>
+                </div>
+                <p>Download your favorite Instagram content quickly and easily.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <a href="/">Home</a>
+                <a href="/downloader/instagram">Instagram Downloader</a>
+                <a href="/about">About Us</a>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <a href="mailto:whyamanbhardwaj@gmail.com">whyamanbhardwaj@gmail.com</a>
+                <p>Support available 24/7</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Made with 💗</p>
+        </div>
+    </footer>
+
+    <script>
+        // Navbar hide/show on scroll
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.scrollY;
+            const navbar = document.querySelector('.navbar');
+            
+            if (currentScroll <= 0) {
+                navbar.classList.remove('hidden');
+                return;
+            }
+            
+            if (currentScroll > lastScroll && !navbar.classList.contains('hidden')) {
+                navbar.classList.add('hidden');
+            } else if (currentScroll < lastScroll && navbar.classList.contains('hidden')) {
+                navbar.classList.remove('hidden');
+            }
+            
+            lastScroll = currentScroll;
+        });
+        
+        // DOM Elements
+        const urlInput = document.getElementById('url-input');
+        const previewBtn = document.getElementById('preview-btn');
+        const previewSection = document.getElementById('preview-section');
+        const closePreviewBtn = document.getElementById('close-preview');
+        const previewVideo = document.getElementById('preview-video');
+        const videoSource = document.getElementById('video-source');
+        const videoTitle = document.getElementById('video-title');
+        const videoDuration = document.getElementById('video-duration');
+        const downloadBtn = document.getElementById('download-btn');
+        const downloadSection = document.getElementById('download-section');
+        const closeDownloadBtn = document.getElementById('close-download');
+        const downloadLink = document.getElementById('download-link');
+        const viewVideo = document.getElementById('view-video');
+        const downloadSuccessTitle = document.getElementById('download-success-title');
+        const downloadSuccessFilename = document.getElementById('download-success-filename');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        // Global variable for the expiration timer
+        let expirationTimer;
+
+        // Reset Preview Function
+        function resetPreview() {
+            previewSection.style.display = 'none';
+            previewVideo.pause();
+            videoSource.src = '';
+            previewVideo.innerHTML = ''; // Clear video sources
+            videoTitle.textContent = 'Reel Title';
+            videoDuration.textContent = 'Duration: 0:00';
+            downloadSection.style.display = 'none';
+            hideError();
+        }
+
+        // Utility Functions
+        function formatDuration(seconds) {
+            if (!seconds) return '0:00';
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.style.display = 'block';
+            loadingSpinner.style.display = 'none';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        function showLoading() {
+            loadingSpinner.style.display = 'block';
+            hideError();
+            previewSection.style.display = 'none';
+            downloadSection.style.display = 'none';
+        }
+
+        function hideLoading() {
+            loadingSpinner.style.display = 'none';
+        }
+
+        // Handle Preview
+        async function handlePreview() {
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showError('Please enter a URL');
+                return;
+            }
+            
+            if (!url.includes('instagram.com')) {
+                showError('Please enter a valid Instagram Reel URL');
+                return;
+            }
+            
+            try {
+                showLoading();
+                resetPreview();
+                
+                const response = await fetch('/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url, platform: 'instagram' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                videoTitle.textContent = data.title || 'Instagram Reel';
+                videoDuration.textContent = `Duration: ${formatDuration(data.duration)}`;
+                
+                previewVideo.innerHTML = '';
+                const source = document.createElement('source');
+                source.src = data.url;
+                source.type = 'video/mp4';
+                previewVideo.appendChild(source);
+                previewVideo.load();
+                
+                previewSection.style.display = 'block';
+                hideLoading();
+            } catch (error) {
+                showError('Failed to fetch reel information. Please try again.');
+                hideLoading();
+            }
+        }
+
+        // Handle Download (UPDATED WITH TIMER)
+        async function handleDownload() {
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                showError('Please enter a URL');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url, platform: 'instagram' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                // --- Timer Logic Starts Here ---
+                const expirationMessage = document.getElementById('expiration-message');
+                expirationMessage.textContent = 'Note: This link will expire in 60 sec.';
+
+                const oneHourInMs = 60 * 1000;
+                
+                if (expirationTimer) {
+                    clearTimeout(expirationTimer);
+                }
+
+                expirationTimer = setTimeout(() => {
+                    const downloadLink = document.getElementById('download-link');
+                    const viewVideo = document.getElementById('view-video');
+                    
+                    downloadLink.href = '#';
+                    viewVideo.href = '#';
+                    
+                    downloadLink.style.pointerEvents = 'none';
+                    downloadLink.style.opacity = '0.5';
+                    viewVideo.style.pointerEvents = 'none';
+                    viewVideo.style.opacity = '0.5';
+
+                    expirationMessage.textContent = 'This download link has expired. Please process the URL again.';
+                }, oneHourInMs);
+                // --- Timer Logic Ends Here ---
+
+                downloadSuccessTitle.textContent = data.title || 'Instagram Reel';
+                downloadSuccessFilename.textContent = `Your reel "${data.title || 'Instagram Reel'}" is ready to download.`;
+                downloadLink.href = data.url;
+                viewVideo.href = data.url;
+                
+                downloadSection.style.display = 'block';
+                previewSection.style.display = 'none';
+                hideLoading();
+
+            } catch (error) {
+                showError('Failed to download reel. Please try again.');
+                hideLoading();
+            }
+        }
+
+        // Event Listeners
+        previewBtn.addEventListener('click', handlePreview);
+        closePreviewBtn.addEventListener('click', resetPreview);
+        downloadBtn.addEventListener('click', handleDownload);
+        closeDownloadBtn.addEventListener('click', () => {
+            downloadSection.style.display = 'none';
+        });
+        urlInput.addEventListener('input', resetPreview);
+        
+    </script>
+</body>
+</html>

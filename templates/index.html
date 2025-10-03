@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clippio | Clip It. Keep It</title>
+    
+    <meta name="description" content="Download Instagram Reels in high quality with Clippio. Fast, easy-to-use, and no registration required.">
+    <meta name="keywords" content="Instagram downloader, Reels download, save Instagram videos, Instagram video downloader">
+    <meta name="author" content="Clippio Team">
+    
+    <meta property="og:title" content="Clippio | Instagram Video Downloader">
+    <meta property="og:description" content="Download Instagram Reels, Stories, and Posts in high quality with our fast and easy-to-use downloader.">
+    <meta property="og:type" content="website">
+    
+    <link rel="icon" href="static/i.png" type="image/x-icon">
+    
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+        
+        body {
+            background: #ffffff;
+            color: #333;
+            overflow-x: hidden;
+            position: relative;
+            line-height: 1.6;
+        }
+        
+        ::selection {
+            background: rgba(225, 48, 108, 0.3);
+        }
+        
+        /* Background Dots */
+        .background-dots {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .bg-dot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, #ff94b8 20%, #E1306C 80%);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(225, 48, 108, 0.3);
+            opacity: 0.6;
+            animation: dotFloat 15s ease-in-out infinite alternate;
+        }
+        
+        .bg-dot:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .bg-dot:nth-child(2) { top: 15%; left: 85%; animation-delay: 1.5s; }
+        .bg-dot:nth-child(3) { top: 20%; left: 25%; animation-delay: 3s; }
+        .bg-dot:nth-child(4) { top: 25%; left: 70%; animation-delay: 4.5s; }
+        .bg-dot:nth-child(5) { top: 30%; left: 15%; animation-delay: 6s; }
+        .bg-dot:nth-child(6) { top: 35%; left: 90%; animation-delay: 7.5s; }
+        .bg-dot:nth-child(7) { top: 40%; left: 35%; animation-delay: 9s; }
+        .bg-dot:nth-child(8) { top: 45%; left: 60%; animation-delay: 10.5s; }
+        .bg-dot:nth-child(9) { top: 50%; left: 5%; animation-delay: 12s; }
+        .bg-dot:nth-child(10) { top: 55%; left: 80%; animation-delay: 13.5s; }
+        
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(225, 48, 108, 0.1);
+        }
+        
+        .navbar.hidden {
+            transform: translateY(-100%);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+        
+        .nav-item a {
+            color: #333;
+            font-weight: 500;
+            position: relative;
+            padding: 0.5rem 0;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-item a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-item a:hover::after, .nav-item.active a::after {
+            width: 100%;
+        }
+        
+        .nav-item a:hover, .nav-item.active a {
+            color: #E1306C;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+        
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: #555;
+            margin-bottom: 2.5rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            color: white;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(225, 48, 108, 0.2);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(225, 48, 108, 0.3);
+        }
+        
+        .cta-button .material-icons {
+            margin-right: 0.5rem;
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 5rem 2rem;
+            background: #fff;
+        }
+        
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem; /* Updated gap */
+            margin-top: 3rem;
+            perspective: 1500px; /* This creates the 3D space */
+        }
+        
+        /* UPDATED: Feature Card with 3D effects */
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid rgba(225, 48, 108, 0.1);
+            box-shadow: 0 20px 40px rgba(225, 48, 108, 0.1);
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            transform-style: preserve-3d;
+        }
+
+        .feature-card:hover {
+            transform: rotateY(15deg) rotateX(-10deg) scale(1.05);
+            box-shadow: 0 35px 60px rgba(225, 48, 108, 0.2);
+        }
+
+        .feature-card > * {
+            transform: translateZ(35px); /* Lifts content towards the viewer */
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .feature-desc {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-link {
+            display: inline-block;
+            padding: 0.5rem 1.5rem;
+            background: linear-gradient(to right, #E1306C, #FF7AB8);
+            color: white;
+            border-radius: 50px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-link:hover {
+            transform: translateY(-2px) translateZ(35px); /* Keep Z-transform on hover */
+            box-shadow: 0 5px 15px rgba(225, 48, 108, 0.2);
+        }
+        
+        /* Footer */
+        footer {
+            background: #111;
+            color: #fff;
+            padding: 4rem 2rem 2rem;
+        }
+        
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .footer-logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #FF7AB8, #E1306C);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .footer-section h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #FF7AB8;
+        }
+        
+        .footer-section p, 
+        .footer-section a {
+            color: #bbb;
+            margin-bottom: 0.75rem;
+            display: block;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-section a:hover {
+            color: #FF7AB8;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 122, 184, 0.2);
+            color: #777;
+        }
+        
+        /* Animations */
+        @keyframes dotFloat {
+            0% { transform: translateY(0) scale(1); opacity: 0.1; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-120px) scale(1.3); opacity: 0; }
+        }
+        
+        /* Timeline Section Styles */
+        .timeline {
+          position: relative;
+          max-width: 1200px;
+          margin: 40px auto;
+          padding: 20px 15px;
+        }
+
+        .timeline::after {
+          content: '';
+          position: absolute;
+          width: 6px;
+          background: linear-gradient(to bottom, #E1306C, #F77737);
+          top: 0;
+          bottom: 0;
+          left: 50%;
+          margin-left: -3px;
+          z-index: 1;
+        }
+
+        .container {
+          padding: 20px 30px;
+          position: relative;
+          background-color: transparent;
+          width: 45%;
+          margin: 20px 0;
+          opacity: 0;
+          transform: translateY(50px);
+          transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+          z-index: 2;
+        }
+
+        .left { left: 5%; }
+        .right { left: 50%; }
+
+        .container::before {
+          content: attr(data-step);
+          position: absolute;
+          top: 20px;
+          width: 40px;
+          height: 40px;
+          background: #E1306C;
+          color: white;
+          border-radius: 50%;
+          text-align: center;
+          line-height: 40px;
+          font-weight: bold;
+          font-size: 18px;
+          z-index: 3;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .left::before { right: -20px; }
+        .right::before { left: -20px; }
+
+        .content {
+          position: relative;
+          z-index: 2;
+        }
+
+        .content h3 {
+          margin: 0 0 10px;
+          color: #333;
+          font-size: 1.5rem;
+        }
+
+        .content p {
+          margin: 0;
+          color: #666;
+          font-size: 1rem;
+        }
+
+        .content img {
+          width: 100%;
+          max-width: 400px;
+          border-radius: 6px;
+          margin-top: 15px;
+          display: block;
+        }
+
+        .show {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            .nav-menu {
+                display: none;
+            }
+        }
+        @media screen and (max-width: 992px) {
+          .timeline::after { left: 30px; }
+          .container {
+            width: calc(100% - 80px);
+            padding-left: 70px;
+            padding-right: 20px;
+          }
+          .left, .right { left: 0; }
+          .left::before, .right::before { left: 15px; }
+          .content { padding: 20px; }
+        }
+        @media screen and (max-width: 600px) {
+          .timeline { padding: 15px 10px; margin: 20px auto; }
+          .timeline::after { left: 20px; width: 4px; }
+          .container {
+            width: calc(100% - 50px);
+            padding-left: 50px;
+            padding-right: 15px;
+            margin: 15px 0;
+          }
+          .container::before { width: 30px; height: 30px; line-height: 30px; font-size: 16px; top: 15px; }
+          .content h3 { font-size: 1.2rem; }
+          .content p { font-size: 0.9rem; }
+          .content img { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-dots">
+        <div class="bg-dot"></div> <div class="bg-dot"></div> <div class="bg-dot"></div>
+        <div class="bg-dot"></div> <div class="bg-dot"></div> <div class="bg-dot"></div>
+        <div class="bg-dot"></div> <div class="bg-dot"></div> <div class="bg-dot"></div>
+        <div class="bg-dot"></div>
+    </div>
+    
+    <nav class="navbar">
+        <div class="logo">
+            <img src="static/i.png" alt="Download" style="height: 28px; width: 32px; vertical-align: middle;">
+            <span class="logo-text">Clippio</span>
+        </div>
+        <ul class="nav-menu">
+            <li class="nav-item active"><a href="/">Home</a></li>
+            <li class="nav-item"><a href="/downloader/instagram">Downloader</a></li>
+            <li class="nav-item"><a href="/about">About</a></li>
+        </ul>
+    </nav>
+    
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Download Instagram Reels</h1>
+            <p class="hero-subtitle">Save your favorite videos from Instagram with our fast and easy-to-use downloader. No registration required!</p>
+            <a href="/downloader/instagram" class="cta-button">
+                <span class="material-icons">arrow_downward</span>
+                Get Started
+            </a>
+        </div>
+    </section>
+    
+    <div class="timeline">
+      <div class="container left" data-step="1">
+        <div class="content">
+          <h3>Copy the Link</h3>
+          <p>Open Instagram, find the reel you want to download, and copy its shareable link using the share option.</p>
+          <img src="static/1.png" alt="Copy Link Screenshot">
+        </div>
+      </div>
+      <div class="container right" data-step="2">
+        <div class="content">
+          <h3>Paste the Link</h3>
+          <p>Visit our website, paste the copied link into the provided field, and click the "Download" button.</p>
+          <img src="static/a.png" alt="Paste Link Screenshot">
+        </div>
+      </div>
+      <div class="container left" data-step="3">
+        <div class="content">
+          <h3>Download</h3>
+          <p>Fetch the reel, then click to download the reel to your device.</p>
+          <img src="static/b.png" alt="Download Step Screenshot">
+        </div>
+      </div>
+      <div class="container right" data-step="4">
+        <div class="content">
+          <h3>Enjoy</h3>
+          <p>Access your downloaded Reels offline or share them with others as needed!</p>
+          <img src="static/e.png" alt="Enjoy Video Screenshot">
+        </div>
+      </div>
+    </div>
+    
+    <section class="features">
+        <div class="features-container">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon material-icons">photo_camera</div>
+                    <h3 class="feature-title">Instagram Downloader</h3>
+                    <p class="feature-desc">Download Instagram Reels, Stories, and Posts in high quality with just one click.</p>
+                    <a href="/downloader/instagram" class="feature-link">Download Now</a>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon material-icons">high_quality</div>
+                    <h3 class="feature-title">High Quality</h3>
+                    <p class="feature-desc">Get your videos in the highest possible quality available on Instagram.</p>
+                    <a href="/downloader/instagram" class="feature-link">Try It Now</a>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon material-icons">bolt</div>
+                    <h3 class="feature-title">Fast & Easy</h3>
+                    <p class="feature-desc">Our downloader works instantly with just the Instagram URL. No waiting!</p>
+                    <a href="/downloader/instagram" class="feature-link">Start Downloading</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <div class="footer-container">
+            <div class="footer-section">
+                <div class="footer-logo">
+                    <img src="static/i.png" alt="Download" style="height: 28px; width: 32px; vertical-align: middle; margin-right: 5px;">
+                    <span class="footer-logo-text">Clippio</span>
+                </div>
+                <p>Download your favorite Instagram content quickly and easily.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <a href="/">Home</a>
+                <a href="/downloader/instagram">Instagram Downloader</a>
+                <a href="/about">About Us</a>
+            </div>
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <a href="mailto:whyamanbhardwaj@gmail.com">whyamanbhardwaj@gmail.com</a>
+                <p>Support available 24/7</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Made with 💗</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Navbar hide/show on scroll
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.scrollY;
+            const navbar = document.querySelector('.navbar');
+            
+            if (currentScroll <= 0) {
+                navbar.classList.remove('hidden');
+                return;
+            }
+            
+            if (currentScroll > lastScroll && !navbar.classList.contains('hidden')) {
+                navbar.classList.add('hidden');
+            } else if (currentScroll < lastScroll && navbar.classList.contains('hidden')) {
+                navbar.classList.remove('hidden');
+            }
+            
+            lastScroll = currentScroll;
+        });
+
+        // Timeline animation on scroll
+        const containers = document.querySelectorAll('.container');
+        const checkVisibility = () => {
+          containers.forEach(container => {
+            const rect = container.getBoundingClientRect();
+            if (rect.top < window.innerHeight * 0.9 && rect.bottom > 0) {
+              container.classList.add('show');
+            }
+          });
+        };
+
+        window.addEventListener('scroll', checkVisibility);
+        window.addEventListener('resize', checkVisibility);
+        document.addEventListener('DOMContentLoaded', checkVisibility);
+    </script>
+</body>
+</html>
