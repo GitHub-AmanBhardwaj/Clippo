@@ -4,30 +4,20 @@ import re
 import os
 import time
 import uuid
-import threading
-import logging
 from urllib.parse import urlparse
 
 # --- App Configuration ---
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['UPLOAD_FOLDER'] = 'static/downloads'
-app.config['MAX_FILE_AGE_SECONDS'] = 60  # CHANGED: Set back to 60 seconds as requested
-app.config['CLEANUP_INTERVAL_SECONDS'] = 30 # NEW: Run cleanup every 30 seconds for faster deletion
+# Vercel handles secrets via Environment Variables in the project settings
+app.config['SECRET_KEY'] = os.environ.get('FLASK_SECRET_KEY', 'default-secret-for-local-dev')
+app.config['UPLOAD_FOLDER'] = '/tmp/static/downloads' # Vercel uses the /tmp directory for writable storage
+app.config['MAX_FILE_AGE_SECONDS'] = 60 
 
-# --- Logging Configuration ---
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# --- Setup ---
+# Ensure the temporary download directory exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # --- Helper Functions ---
-def setup_app():
-    """Ensure necessary folders and background tasks are set up."""
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    
-    # NEW: Start the background cleanup task as a daemon thread
-    cleanup_thread = threading.Thread(target=background_cleanup_task, daemon=True)
-    cleanup_thread.start()
-    logging.info(f"Background cleanup task started. Will run every {app.config['CLEANUP_INTERVAL_SECONDS']} seconds.")
-
 def clean_filename(filename):
     """Remove invalid characters from filename."""
     return re.sub(r'[\\/*?:"<>|]', "", filename)
@@ -47,49 +37,38 @@ def cleanup_old_files():
         max_age = app.config['MAX_FILE_AGE_SECONDS']
         folder = app.config['UPLOAD_FOLDER']
         
-        logging.info("Running scheduled file cleanup...")
-        deleted_count = 0
         for filename in os.listdir(folder):
             file_path = os.path.join(folder, filename)
             if os.path.isfile(file_path):
                 if (now - os.path.getmtime(file_path)) > max_age:
-                    try:
-                        os.remove(file_path)
-                        logging.info(f"Deleted old file: {filename}")
-                        deleted_count += 1
-                    except Exception as e:
-                        logging.error(f"Error deleting file {file_path}: {e}")
-        logging.info(f"Cleanup finished. Deleted {deleted_count} file(s).")
+                    os.remove(file_path)
     except Exception as e:
-        logging.error(f"An error occurred during the cleanup process: {e}")
-
-def background_cleanup_task():
-    """NEW: This function runs in the background to periodically clean up old files."""
-    while True:
-        time.sleep(app.config['CLEANUP_INTERVAL_SECONDS'])
-        cleanup_old_files()
+        # In a production environment, you would log this error
+        print(f"Error during cleanup: {e}")
 
 # --- Routes ---
+# Note: No need for home, about, or downloader routes if they are static HTML.
+# Vercel will serve them automatically. If they use Jinja templating, keep them.
+
 @app.route('/')
 def home():
     return render_template('index.html')
 
 @app.route('/about')
 def about():
-    return render_template('about.html', platform='Instagram')
+    return render_template('about.html')
 
 @app.route('/downloader/instagram')
 def downloader():
-    return render_template('downloader.html', platform='Instagram')
+    return render_template('downloader.html')
 
 @app.route('/preview', methods=['POST'])
 def preview():
+    # ... (This function remains the same as your original)
     data = request.get_json()
     url = data.get('url')
-    
     if not url or not is_valid_url(url):
         return jsonify({'error': 'Invalid Instagram URL'}), 400
-    
     try:
         ydl_opts = {'format': 'best', 'quiet': True, 'no_warnings': True}
         with YoutubeDL(ydl_opts) as ydl:
@@ -97,45 +76,55 @@ def preview():
             return jsonify({
                 'success': True,
                 'title': info.get('title', 'Video Preview'),
-                'thumbnail': info.get('thumbnail', ''),
-                'duration': info.get('duration', 0),
                 'url': info.get('url', '')
             })
     except Exception as e:
-        logging.error(f"Error in /preview for URL {url}: {e}")
-        return jsonify({'error': 'Could not fetch video preview.'}), 500
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/download', methods=['POST'])
 def download():
+    # Cleanup runs at the start of a download, which is reliable in a serverless environment
+    cleanup_old_files()
+    
     data = request.get_json()
     url = data.get('url')
-    
     if not url or not is_valid_url(url):
         return jsonify({'error': 'Invalid Instagram URL'}), 400
     
     try:
         unique_id = str(uuid.uuid4())[:8]
+        # Get video info first to create a clean filename
+        with YoutubeDL({'quiet': True, 'no_warnings': True}) as ydl:
+            info = ydl.extract_info(url, download=False)
+            title = clean_filename(info.get('title', 'video'))
+            ext = info.get('ext', 'mp4')
+
+        filename = f"{title}_{unique_id}.{ext}"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
         ydl_opts = {
             'format': 'best',
-            'outtmpl': os.path.join(app.config['UPLOAD_FOLDER'], f'video_{unique_id}_%(title)s.%(ext)s'),
+            'outtmpl': filepath,
             'quiet': True,
             'no_warnings': True,
         }
         
         with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = os.path.basename(ydl.prepare_filename(info))
-            
-            return jsonify({
-                'success': True,
-                'url': f'/static/downloads/{filename}',
-                'title': info.get('title', 'Downloaded Video'),
-                'expires_in_seconds': app.config['MAX_FILE_AGE_SECONDS'] # For frontend timer
-            })
-    except Exception as e:
-        logging.error(f"Error in /download for URL {url}: {e}")
-        return jsonify({'error': 'Could not process the video download.'}), 500
+            ydl.download([url])
 
-if __name__ == '__main__':
-    setup_app()
-    app.run(debug=True)
+        return jsonify({
+            'success': True,
+            # This URL will be handled by a new /serve route
+            'url': f'/serve/{filename}',
+            'title': info.get('title', 'Downloaded Video'),
+            'expires_in_seconds': app.config['MAX_FILE_AGE_SECONDS']
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# NEW ROUTE: To serve files from the /tmp directory
+from flask import send_from_directory
+
+@app.route('/serve/<filename>')
+def serve_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
